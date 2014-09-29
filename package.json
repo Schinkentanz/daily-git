@@ -11,6 +11,10 @@
   "bin": {
     "daily-git": "./bin/daily-git.js"
   },
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/Schinkentanz/daily-git"
+  },
   "preferGlobal": true,
   "author": "Schinkentanz",
   "license": "MIT",
