@@ -7,7 +7,9 @@ var npm = require('npm'),
     client = null, ghme = null,
     settings = {
       days: optimistArgv.days || 1
-    };
+    },
+    otgb = clc.xterm(202).bgXterm(236), // orange text, gray background
+    wtgb = clc.xterm(231).bgXterm(236); // white text, gray background
 
 module.exports = function() {
   npm.load({}, function() {
@@ -61,18 +63,19 @@ function getDailyDate () {
   return dailyDay.format();
 }
 
-function getRepoCommits (repoData) {
+function getRepoCommits (repoData, branch) {
   return new Promise(function(resolve, reject) {
     client.get('/repos/' + repoData.owner + '/' + repoData.name + '/commits', {
       author: settings.username,
-      since: getDailyDate()
+      since: getDailyDate(),
+      sha: branch.name
     }, function(err, status, body, headers) {
-
       var commits = Array.prototype.slice.call(body);
 
-      if (commits.length) {
-        resolve(commits);
-      }
+      resolve({
+        commits: commits,
+        branch: branch
+      });
     });
   });
 }
@@ -83,21 +86,20 @@ function printUnderline (str) {
   console.log(wtgb(new Array(str.length + 1).join('=')));
 }
 
-function printHeadline (repoData) {
-  var otgb = clc.xterm(202).bgXterm(236), // orange text, gray background
-      wtgb = clc.xterm(231).bgXterm(236), // white text, gray background
-      spacer = ' // ',
-      headline = otgb(repoData.owner) + wtgb(spacer) + otgb(repoData.name);
+function printHeadline (repoData, branch) {
+  var spacer = ' // ',
+      headline = [
+        otgb(repoData.owner),
+        wtgb(spacer + repoData.name + spacer),
+        otgb(branch.name)
+      ].join('');
 
   console.log('\n');
   console.log(headline);
-  printUnderline(repoData.owner + spacer + repoData.name);
+  printUnderline(repoData.owner + spacer + repoData.name + spacer + branch.name);
 };
 
 function printCommit (commit) {
-  var otgb = clc.xterm(202).bgXterm(236), // orange text, gray background
-      wtgb = clc.xterm(231).bgXterm(236); // white text, gray background
-
   var message = commit.commit.message,
       date = moment(commit.commit.committer.date).format('L HH:MM'),
       spacer = ' | ',
@@ -130,17 +132,25 @@ function getRepos () {
   });
 }
 
+function getBranches (repo) {
+  return repo.branchesAsync().then(function(result) {
+    return result[0];
+  });
+}
+
 function doTheDailyGit () {
   Promise.join(getOrganizationRepos(), getRepos(), function(organizationRepos, repos) {
-    var repositories = organizationRepos.concat(repos);
+    return organizationRepos.concat(repos);
+  }).map(function(repository) {
+    var repoData = getRepoData(repository);
 
-    repositories.forEach(function(repo) {
-      var repoData = getRepoData(repo);
-
-      getRepoCommits(repoData).then(function(commits) {
-        printHeadline(repoData);
-        commits.forEach(printCommit);
-      });
-    });
+    getBranches(repository).map(function(branch) {
+      return getRepoCommits(repoData, branch);
+    }).each(function(result) {
+      if (result.commits.length) {
+        printHeadline(repoData, result.branch);
+        result.commits.forEach(printCommit);
+      }
+    })
   });
 }
