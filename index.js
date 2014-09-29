@@ -9,6 +9,22 @@ var npm = require('npm'),
       days: optimistArgv.days || 1
     };
 
+module.exports = function() {
+  npm.load({}, function() {
+    settings.username = npm.config.get('dailygitUsername');
+    settings.password = npm.config.get('dailygitPassword');
+
+    client = github.client(settings.username && settings.password ? {
+      username: settings.username,
+      password: settings.password
+    } : {});
+
+    ghme = client.me();
+
+    doTheDailyGit();
+  });
+}();
+
 function mapOrganizations (orgs) {
   return orgs.map(function (org) {
     return client.org(org.login);
@@ -128,19 +144,3 @@ function doTheDailyGit () {
     });
   });
 }
-
-module.exports = function() {
-  npm.load({}, function() {
-    settings.username = npm.config.get('dailygitUsername');
-    settings.password = npm.config.get('dailygitPassword');
-
-    client = github.client(settings.username && settings.password ? {
-      username: settings.username,
-      password: settings.password
-    } : {});
-
-    ghme = client.me();
-
-    doTheDailyGit();
-  });
-}();
