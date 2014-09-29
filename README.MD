@@ -1,7 +1,5 @@
 # Daily Git
 
----
-
 ## Installation
 ```bash
 npm install -g daily-git
