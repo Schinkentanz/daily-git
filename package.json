@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Schinkentanz/daily-git"
+    "url": "git://github.com/schinkentanz/daily-git.git"
   },
   "preferGlobal": true,
   "author": "Schinkentanz",
