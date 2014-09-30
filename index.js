@@ -3,27 +3,35 @@ var npm = require('npm'),
     Promise = require('bluebird'),
     moment = require('moment'),
     github = Promise.promisifyAll(require('octonode')),
-    optimistArgv = require('optimist').argv,
+    argv = argv = require('minimist')(process.argv.slice(2)),
     client = null, ghme = null,
     settings = {
-      days: optimistArgv.days || 1
+      days: argv.days || 1
     },
-    otgb = clc.xterm(202).bgXterm(236), // orange text, gray background
-    wtgb = clc.xterm(231).bgXterm(236); // white text, gray background
+    ct = clc.cyanBright,
+    bt = clc.blackBright,
+    rt = clc.redBright;
 
 module.exports = function() {
   npm.load({}, function() {
-    settings.username = npm.config.get('dailygitUsername');
-    settings.password = npm.config.get('dailygitPassword');
+    settings.token = npm.config.get('daily-git:token');
+    settings.username = npm.config.get('daily-git:username');
 
-    client = github.client(settings.username && settings.password ? {
-      username: settings.username,
-      password: settings.password
-    } : {});
+    if (!settings.token) {
+      printError('Token is missing! Set it via:\n\tnpm config set daily-git:token <TOKEN>');
+      return;
+    }
+
+    if (!settings.username) {
+      printError('Username is missing! Set it via:\n\tnpm config set daily-git:username <USERNAME>');
+      return;
+    }
+
+    client = github.client(settings.token);
 
     ghme = client.me();
 
-    doTheDailyGit();
+    getLimit().then(doTheDailyGit);
   });
 }();
 
@@ -81,21 +89,24 @@ function getRepoCommits (repoData, branch) {
 }
 
 function printUnderline (str) {
-  var wtgb = clc.xterm(231); // white text
+  console.log(new Array(str.length + 1).join('='));
+}
 
-  console.log(wtgb(new Array(str.length + 1).join('=')));
+function printError (str) {
+  console.log(rt('ERROR: ') + str);
 }
 
 function printHeadline (repoData, branch) {
   var spacer = ' // ',
       headline = [
-        otgb(repoData.owner),
-        wtgb(spacer + repoData.name + spacer),
-        otgb(branch.name)
+        ct(repoData.owner),
+        bt(spacer),
+        ct(repoData.name),
+        bt(spacer),
+        branch.name
       ].join('');
 
-  console.log('\n');
-  console.log(headline);
+  console.log('\n' + headline);
   printUnderline(repoData.owner + spacer + repoData.name + spacer + branch.name);
 };
 
@@ -107,7 +118,7 @@ function printCommit (commit) {
 
   message = message.replace(/\n/g, '\n' + new Array(dateSpacerCount + 1).join(' '));
 
-  console.log(wtgb(date + spacer) + otgb(message));
+  console.log(bt(date + spacer) + ct(message));
 }
 
 function getOrganizationRepos () {
@@ -123,18 +134,32 @@ function getOrganizationRepos () {
     });
 
     return repositories;
+  }).catch(function(e) {
+    printError('Error occured while loading organization repos: ' + e);
+    return [];
   });
 }
 
 function getRepos () {
   return ghme.reposAsync().then(function(result) {
     return mapRepositories(result[0]);
+  }).catch(function(e) {
+    printError('Error occured while loading repos: ' + e);
+    return [];
   });
 }
 
 function getBranches (repo) {
   return repo.branchesAsync().then(function(result) {
     return result[0];
+  });
+}
+
+function getLimit () {
+  return Promise.promisify(client.limit)().then(function(result) {
+    var limit = 'Requests limit // left ' + result[0] + ' // max ' + result[1];
+
+    console.log(bt(limit));
   });
 }
 

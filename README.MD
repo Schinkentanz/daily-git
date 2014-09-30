@@ -1,15 +1,19 @@
 # Daily Git
+Prints an overview of all commits since last work day (0 am).
 
 ## Installation
 ```bash
 npm install -g daily-git
 ```
 
-## Save github credentials to npm config
+## Create new github token
+https://github.com/settings/tokens/new (use default settings)
+
+## Save github credentials using npm config
 
 ```bash
-npm config set dailygitUsername <YOUR GITHUB USERNAME>
-npm config set dailygitPassword <YOUR GITHUB PASSWORD>
+npm config set daily-git:token <TOKEN>
+npm config set daily-git:username <USERNAME>
 ```
 
 ## Get your daily
