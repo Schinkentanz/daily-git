@@ -18,7 +18,7 @@ module.exports = function() {
     settings.username = npm.config.get('daily-git:username');
 
     if (!settings.token) {
-      printError('Token is missing! Set it via:\n\tnpm config set daily-git:token <TOKEN>');
+      printError('Token is missing (https://github.com/settings/tokens/new)! Set it via:\n\tnpm config set daily-git:token <TOKEN>');
       return;
     }
 
@@ -96,6 +96,10 @@ function printError (str) {
   console.log(rt('ERROR: ') + str);
 }
 
+function printInfo (str) {
+  console.log(ct('INFO: ') + str);
+}
+
 function printHeadline (repoData, branch) {
   var spacer = ' // ',
       headline = [
@@ -157,14 +161,24 @@ function getBranches (repo) {
 
 function getLimit () {
   return Promise.promisify(client.limit)().then(function(result) {
-    var limit = 'Requests limit // left ' + result[0] + ' // max ' + result[1];
+    var left = result[0],
+        max = result[1];
 
-    console.log(bt(limit));
+    printInfo('Requests left ' + left + bt(' (max: ' + max + ')'));
   });
 }
 
 function doTheDailyGit () {
   Promise.join(getOrganizationRepos(), getRepos(), function(organizationRepos, repos) {
+
+    if (!repos.length) {
+      printInfo(settings.username + ' has no organization repositories.');
+    }
+
+    if (!repos.length) {
+      printInfo(settings.username + ' has no repositories.');
+    }
+
     return organizationRepos.concat(repos);
   }).map(function(repository) {
     var repoData = getRepoData(repository);
