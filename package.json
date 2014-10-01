@@ -1,6 +1,6 @@
 {
   "name": "daily-git",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Prints an overview of all commits since last work day (0 am).",
   "keywords": [
     "git",
