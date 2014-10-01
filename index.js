@@ -31,7 +31,7 @@ module.exports = function() {
 
     ghme = client.me();
 
-    getLimit().then(doTheDailyGit);
+    doTheDailyGit();
   });
 }();
 
@@ -53,6 +53,7 @@ function getRepoData (repo) {
       name = split[1];
 
   return {
+    repo: repo,
     owner: owner,
     name: name
   };
@@ -80,10 +81,7 @@ function getRepoCommits (repoData, branch) {
     }, function(err, status, body, headers) {
       var commits = Array.prototype.slice.call(body);
 
-      resolve({
-        commits: commits,
-        branch: branch
-      });
+      resolve(commits);
     });
   });
 }
@@ -96,11 +94,12 @@ function printError (str) {
   console.log(rt('ERROR: ') + str);
 }
 
-function printInfo (str) {
-  console.log(ct('INFO: ') + str);
+function printInfo (str, printNewLine) {
+  var newLine = printNewLine ? '\n' : '';
+  console.log(newLine + ct('INFO: ') + str);
 }
 
-function printHeadline (repoData, branch) {
+function printRepoData (repoData, branch) {
   var spacer = ' // ',
       headline = [
         ct(repoData.owner),
@@ -164,7 +163,7 @@ function getLimit () {
     var left = result[0],
         max = result[1];
 
-    printInfo('Requests left ' + left + bt(' (max: ' + max + ')'));
+    printInfo('Requests left ' + left + bt(' (max: ' + max + ')'), true);
   });
 }
 
@@ -172,24 +171,48 @@ function doTheDailyGit () {
   Promise.join(getOrganizationRepos(), getRepos(), function(organizationRepos, repos) {
 
     if (!repos.length) {
-      printInfo(settings.username + ' has no organization repositories.');
+      printInfo(settings.username + ' has no repositories.');
+    } else {
+      printInfo(repos.length + ' repositories found.');
     }
 
-    if (!repos.length) {
-      printInfo(settings.username + ' has no repositories.');
+    if (!organizationRepos.length) {
+      printInfo(settings.username + ' has no organization repositories.');
+    } else {
+      printInfo(organizationRepos.length + ' organization repositories found.');
     }
 
     return organizationRepos.concat(repos);
   }).map(function(repository) {
-    var repoData = getRepoData(repository);
+    return Promise.all([
+      getRepoData(repository),
+      getBranches(repository)
+    ]);
+  }).map(function(result) {
+    var repoData = result[0],
+        branches = result[1],
+        commits = [];
 
-    getBranches(repository).map(function(branch) {
-      return getRepoCommits(repoData, branch);
-    }).each(function(result) {
-      if (result.commits.length) {
-        printHeadline(repoData, result.branch);
-        result.commits.forEach(printCommit);
+    branches.forEach(function(branch) {
+      commits.push(getRepoCommits(repoData, branch));
+    });
+
+    return Promise.all([
+      repoData,
+      branches
+    ].concat(commits));
+  }).each(function(result) {
+    var repoData = result[0],
+        branches = result[1],
+        commits = result.splice(2);
+
+    branches.forEach(function(branch, index) {
+      var branchCommits = commits[index];
+
+      if (branchCommits.length) {
+        printRepoData(repoData, branch);
+        branchCommits.forEach(printCommit);
       }
-    })
-  });
+    });
+  }).then(getLimit);
 }
