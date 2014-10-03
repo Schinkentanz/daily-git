@@ -1,3 +1,4 @@
+[![NPM version](https://badge.fury.io/js/daily-git.svg)](http://badge.fury.io/js/daily-git)
 [![Dependency Status](https://david-dm.org/schinkentanz/daily-git.svg)](https://david-dm.org/schinkentanz/daily-git)
 
 # Daily Git(hub)
