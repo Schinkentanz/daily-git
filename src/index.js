@@ -14,7 +14,9 @@ var npm = require('npm'),
       days: argv.days || 1
     };
 
-function init () {
+function init (days) {
+  settings.days = days || settings.days;
+
   return new Promise(function(resolve, reject) {
     npm.load({}, function() {
       settings.token = npm.config.get('daily-git:token');
