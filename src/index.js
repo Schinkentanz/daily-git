@@ -1,3 +1,5 @@
+/* global -Promise */ // https://github.com/jshint/jshint/issues/1747
+
 var npm = require('npm'),
     clc = require('cli-color'),
     Promise = require('bluebird'),
@@ -45,7 +47,7 @@ function mapOrganizations (orgs) {
 
 function mapRepositories (repos) {
   return repos.map(function(repo) {
-    return client.repo(repo.full_name)
+    return client.repo(repo.full_name);
   });
 }
 
@@ -113,7 +115,7 @@ function printRepoData (repoData, branch) {
 
   console.log('\n' + headline);
   printUnderline(repoData.owner + spacer + repoData.name + spacer + branch.name);
-};
+}
 
 function printCommit (commit) {
   var message = commit.commit.message,
@@ -129,7 +131,7 @@ function printCommit (commit) {
 function printLimit () {
   return getLimit().then(function(limit) {
     printInfo('Requests left ' + limit.left + bt(' (max: ' + limit.max + ')'), true);
-  })
+  });
 }
 
 function printDaily () {
@@ -239,7 +241,7 @@ function getReposBranchesAndCommits () {
     return {
       repoData: repoData,
       branches: branches
-    }
+    };
   });
 }
 
