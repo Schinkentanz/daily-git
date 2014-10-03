@@ -3,37 +3,39 @@ var npm = require('npm'),
     Promise = require('bluebird'),
     moment = require('moment'),
     github = Promise.promisifyAll(require('octonode')),
-    argv = argv = require('minimist')(process.argv.slice(2)),
+    argv = require('minimist')(process.argv.slice(2)),
     client = null, ghme = null,
-    settings = {
-      days: argv.days || 1
-    },
     ct = clc.cyanBright,
     bt = clc.blackBright,
-    rt = clc.redBright;
+    rt = clc.redBright,
+    settings = {
+      days: argv.days || 1
+    };
 
-module.exports = function() {
-  npm.load({}, function() {
-    settings.token = npm.config.get('daily-git:token');
-    settings.username = npm.config.get('daily-git:username');
+function init () {
+  return new Promise(function(resolve, reject) {
+    npm.load({}, function() {
+      settings.token = npm.config.get('daily-git:token');
+      settings.username = npm.config.get('daily-git:username');
 
-    if (!settings.token) {
-      printError('Token is missing (https://github.com/settings/tokens/new)! Set it via:\n\tnpm config set daily-git:token <TOKEN>');
-      return;
-    }
+      if (!settings.token) {
+        printError('Token is missing (https://github.com/settings/tokens/new)! Set it via:\n\tnpm config set daily-git:token <TOKEN>');
+        return;
+      }
 
-    if (!settings.username) {
-      printError('Username is missing! Set it via:\n\tnpm config set daily-git:username <USERNAME>');
-      return;
-    }
+      if (!settings.username) {
+        printError('Username is missing! Set it via:\n\tnpm config set daily-git:username <USERNAME>');
+        return;
+      }
 
-    client = github.client(settings.token);
+      client = github.client(settings.token);
 
-    ghme = client.me();
+      ghme = client.me();
 
-    doTheDailyGit();
+      resolve();
+    });
   });
-}();
+}
 
 function mapOrganizations (orgs) {
   return orgs.map(function (org) {
@@ -124,6 +126,23 @@ function printCommit (commit) {
   console.log(bt(date + spacer) + ct(message));
 }
 
+function printLimit () {
+  return getLimit().then(function(limit) {
+    printInfo('Requests left ' + limit.left + bt(' (max: ' + limit.max + ')'), true);
+  })
+}
+
+function printDaily () {
+  return getReposBranchesAndCommits().each(function(result) {
+    result.branches.forEach(function(branch) {
+      if (branch.commits.length) {
+        printRepoData(result.repoData, branch);
+        branch.commits.forEach(printCommit);
+      }
+    });
+  });
+}
+
 function getOrganizationRepos () {
   return ghme.orgsAsync().then(function(result) {
     return mapOrganizations(result[0]);
@@ -163,12 +182,15 @@ function getLimit () {
     var left = result[0],
         max = result[1];
 
-    printInfo('Requests left ' + left + bt(' (max: ' + max + ')'), true);
+    return {
+      left: left,
+      max: max
+    };
   });
 }
 
-function doTheDailyGit () {
-  Promise.join(getOrganizationRepos(), getRepos(), function(organizationRepos, repos) {
+function getAllRepos () {
+  return Promise.join(getOrganizationRepos(), getRepos(), function(organizationRepos, repos) {
 
     if (!repos.length) {
       printInfo(settings.username + ' has no repositories.');
@@ -183,7 +205,11 @@ function doTheDailyGit () {
     }
 
     return organizationRepos.concat(repos);
-  }).map(function(repository) {
+  });
+}
+
+function getReposBranchesAndCommits () {
+  return getAllRepos().map(function(repository) {
     return Promise.all([
       getRepoData(repository),
       getBranches(repository)
@@ -201,18 +227,36 @@ function doTheDailyGit () {
       repoData,
       branches
     ].concat(commits));
-  }).each(function(result) {
+  }).map(function(result) {
     var repoData = result[0],
         branches = result[1],
         commits = result.splice(2);
 
     branches.forEach(function(branch, index) {
-      var branchCommits = commits[index];
-
-      if (branchCommits.length) {
-        printRepoData(repoData, branch);
-        branchCommits.forEach(printCommit);
-      }
+      branch.commits = commits[index];
     });
-  }).then(getLimit);
+
+    return {
+      repoData: repoData,
+      branches: branches
+    }
+  });
 }
+
+module.exports = {
+  print: {
+    info: printInfo,
+    daily: printDaily,
+    error: printError,
+    limit: printLimit,
+    commit: printCommit,
+    repoData: printRepoData
+  },
+  init: init,
+  limit: getLimit,
+  getRepos: getRepos,
+  getBranches: getBranches,
+  getRepoCommits: getRepoCommits,
+  getOrganizationRepos: getOrganizationRepos,
+  getReposBranchesAndCommits: getReposBranchesAndCommits
+};
