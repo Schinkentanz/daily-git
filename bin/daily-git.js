@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-var dailygit = require('../');
+var dailygit = require('../src/');
 
 dailygit.init()
         .then(dailygit.print.daily)
