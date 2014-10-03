@@ -26,12 +26,12 @@
   "author": "Schinkentanz",
   "license": "MIT",
   "dependencies": {
-    "bluebird": "~2.3.2",
+    "bluebird": "~2.3.4",
     "cli-color": "~0.3.2",
     "github": "~0.2.2",
     "minimist": "~1.1.0",
     "moment": "~2.8.3",
-    "npm": "~2.0.2",
+    "npm": "~2.1.2",
     "octonode": "~0.6.7"
   }
 }
