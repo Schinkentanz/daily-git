@@ -1,7 +1,7 @@
 [![Dependency Status](https://david-dm.org/schinkentanz/daily-git.svg)](https://david-dm.org/schinkentanz/daily-git)
 
-# Daily Git
-Prints an overview of all commits since last work day (0 am).
+# Daily Git(hub)
+Prints an overview of all commits on github since last work day (0 am).
 
 ## Installation
 ```bash
