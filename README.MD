@@ -2,7 +2,7 @@
 [![Dependency Status](https://david-dm.org/schinkentanz/daily-git.svg)](https://david-dm.org/schinkentanz/daily-git)
 
 # Daily Git(hub)
-Get all of your commits on github (default: since last work day (0 am)).
+Get all of your commits on github (default: since last work day (0 am).
 
 ## Create new github token
 https://github.com/settings/tokens/new (use default settings)
