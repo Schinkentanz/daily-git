@@ -1,6 +1,6 @@
 {
   "name": "daily-git",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Get all of your commits on github (default: since last work day (0 am).",
   "keywords": [
     "git",
