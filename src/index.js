@@ -44,15 +44,17 @@ function init (days) {
   });
 }
 
-function mapOrganizations (orgs) {
-  return orgs.map(function (org) {
-    return client.org(org.login);
-  });
+function mapOrganization (org) {
+  return client.org(org.login);
+}
+
+function mapRepository (repo) {
+  return client.repo(repo.full_name);
 }
 
 function mapRepositories (repos) {
   return repos.map(function(repo) {
-    return client.repo(repo.full_name);
+    return mapRepository(repo);
   });
 }
 
@@ -140,7 +142,7 @@ function printCommit (commit) {
 
 function printLimit () {
   return getLimit().then(function(limit) {
-    printInfo('Requests left ' + limit.left + bt(' (max: ' + limit.max + ')'), true);
+    printInfo(limit.left + ' requests left. ' + chalk.gray(' (max: ' + limit.max + ')'), true);
   });
 }
 
@@ -156,44 +158,52 @@ function printDaily () {
 }
 
 function getOrganizationRepos () {
-  return ghme.orgsAsync().then(function(result) {
-    return mapOrganizations(result[0]);
-  }).map(function(organization) {
-    return organization.reposAsync();
-  }).then(function(results) {
-    var repositories = [];
+  return ghme.orgsAsync().get(0)
+    .map(mapOrganization)
+    .map(function(organization) {
+      return organization.reposAsync();
+    }).then(function(results) {
+      var repositories = [];
 
-    results.forEach(function(result) {
-      repositories = repositories.concat(mapRepositories(result[0]));
+      results.forEach(function(result) {
+        repositories = repositories.concat(mapRepositories(result[0]));
+      });
+
+      return repositories;
+    }).catch(function(e) {
+      printError('Error occured while loading organization repos: ' + e);
+      return [];
+    }).tap(function(organizationRepos) {
+      if (!organizationRepos.length) {
+        printInfo(settings.username + ' has no organization repositories.');
+      } else {
+        printInfo(organizationRepos.length + ' organization repositories found.');
+      }
     });
-
-    return repositories;
-  }).catch(function(e) {
-    printError('Error occured while loading organization repos: ' + e);
-    return [];
-  });
 }
 
 function getRepos () {
-  return ghme.reposAsync().then(function(result) {
-    return mapRepositories(result[0]);
-  }).catch(function(e) {
-    printError('Error occured while loading repos: ' + e);
-    return [];
-  });
+  return ghme.reposAsync().get(0)
+    .map(mapRepository).catch(function(e) {
+      printError('Error occured while loading repos: ' + e);
+      return [];
+    }).tap(function(repos) {
+      if (!repos.length) {
+        printInfo(settings.username + ' has no repositories.');
+      } else {
+        printInfo(repos.length + ' repositories found.');
+      }
+    });
 }
 
 function getBranches (repo) {
-  return repo.branchesAsync().then(function(result) {
-    return result[0];
-  });
+  return repo.branchesAsync().get(0);
 }
 
 function getLimit () {
-  return Promise.promisify(client.limit)().then(function(result) {
-    var left = result[0],
-        max = result[1];
+  var clientLimitAsync = Promise.promisify(client.limit);
 
+  return clientLimitAsync().spread(function(left, max) {
     return {
       left: left,
       max: max
@@ -202,20 +212,7 @@ function getLimit () {
 }
 
 function getAllRepos () {
-  return Promise.join(getOrganizationRepos(), getRepos(), function(organizationRepos, repos) {
-
-    if (!repos.length) {
-      printInfo(settings.username + ' has no repositories.');
-    } else {
-      printInfo(repos.length + ' repositories found.');
-    }
-
-    if (!organizationRepos.length) {
-      printInfo(settings.username + ' has no organization repositories.');
-    } else {
-      printInfo(organizationRepos.length + ' organization repositories found.');
-    }
-
+  return Promise.join(getOrganizationRepos(), getRepos()).spread(function(organizationRepos, repos) {
     return organizationRepos.concat(repos);
   });
 }
@@ -226,7 +223,7 @@ function getReposBranchesAndCommits () {
       getRepoData(repository),
       getBranches(repository)
     ]);
-  }).map(function(result) {
+  }).map(function(result) { // mapSpread is missing ...
     var repoData = result[0],
         branches = result[1],
         commits = [];
