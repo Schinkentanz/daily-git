@@ -16,7 +16,12 @@ function init (days) {
   settings.days = days || settings.days;
 
   return new Promise(function(resolve, reject) {
-    npm.load({}, function() {
+    npm.load({}, function(err) {
+      if (err) {
+        printError('Failed to load npm ...');
+        reject(err);
+      }
+
       settings.token = npm.config.get('daily-git:token');
       settings.username = npm.config.get('daily-git:username');
 
@@ -83,10 +88,15 @@ function getRepoCommits (repoData, branch) {
       since: getDailyDate(),
       sha: branch.name
     }, function(err, status, body, headers) {
+      if (err) { reject(err); }
+
       var commits = Array.prototype.slice.call(body);
 
       resolve(commits);
     });
+  }).catch(function(e) {
+    printError('Error occured while loading commits for ' + repoData.owner + '/' + repoData.name + ': ' + e);
+    return [];
   });
 }
 
