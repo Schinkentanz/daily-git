@@ -83,6 +83,7 @@ dailygit.print.daily();                     // prints your daily git(hub)
 dailygit.limit();                           // promise result: an object: { left: 5000, max: 5000 }
 dailygit.getRepos();                        // promise result: an array of octnode repos, e.g. client.repo('pksunkara/octonode')
 dailygit.getOrganizationRepos();            // promise result: an array of octonode repos, e.g. client.repo('pksunkara/octonode')
+dailygit.getAllRepos();                     // promise result: an array of octonode repos, e.g. client.repo('pksunkara/octonode')
 dailygit.getBranches(repo);                 // promise result: an array of branch objects: https://developer.github.com/v3/repos/#list-branches
 dailygit.getRepoCommits(repoData, branch);  // promise result: an array of commit objects: https://developer.github.com/v3/repos/commits/#list-commits-on-a-repository
 dailygit.getReposBranchesAndCommits();      // promise result: [{repoData: { name: '', owner: '', repo: octonodeRepo }, branches: [{ name: '', commits: [...] }] ...} ...]

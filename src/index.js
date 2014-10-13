@@ -258,6 +258,7 @@ module.exports = {
   limit: getLimit,
   getRepos: getRepos,
   getBranches: getBranches,
+  getAllRepos: getAllRepos,
   getRepoCommits: getRepoCommits,
   getOrganizationRepos: getOrganizationRepos,
   getReposBranchesAndCommits: getReposBranchesAndCommits
