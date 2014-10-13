@@ -1,15 +1,13 @@
 /* global -Promise */ // https://github.com/jshint/jshint/issues/1747
 
 var npm = require('npm'),
-    clc = require('cli-color'),
+    chalk = require('chalk'),
     Promise = require('bluebird'),
     moment = require('moment'),
     github = Promise.promisifyAll(require('octonode')),
     argv = require('minimist')(process.argv.slice(2)),
+    logSymbols = require('log-symbols'),
     client = null, ghme = null,
-    ct = clc.cyanBright,
-    bt = clc.blackBright,
-    rt = clc.redBright,
     settings = {
       days: argv.days || 1
     };
@@ -93,26 +91,26 @@ function getRepoCommits (repoData, branch) {
 }
 
 function printUnderline (str) {
-  console.log(new Array(str.length + 1).join('='));
+  console.log(chalk.gray(new Array(str.length + 1).join('=')));
 }
 
 function printError (str) {
-  console.log(rt('ERROR: ') + str);
+  console.log(logSymbols.error + ' ' + str);
 }
 
 function printInfo (str, printNewLine) {
   var newLine = printNewLine ? '\n' : '';
-  console.log(newLine + ct('INFO: ') + str);
+  console.log(newLine + logSymbols.info + ' ' + str);
 }
 
 function printRepoData (repoData, branch) {
   var spacer = ' // ',
       headline = [
-        ct(repoData.owner),
-        bt(spacer),
-        ct(repoData.name),
-        bt(spacer),
-        branch.name
+        chalk.cyan(repoData.owner),
+        chalk.gray(spacer),
+        chalk.cyan(repoData.name),
+        chalk.gray(spacer),
+        chalk.gray(branch.name)
       ].join('');
 
   console.log('\n' + headline);
@@ -127,7 +125,7 @@ function printCommit (commit) {
 
   message = message.replace(/\n/g, '\n' + new Array(dateSpacerCount + 1).join(' '));
 
-  console.log(bt(date + spacer) + ct(message));
+  console.log(chalk.gray(date + spacer) + chalk.cyan(message));
 }
 
 function printLimit () {

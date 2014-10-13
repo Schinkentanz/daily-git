@@ -27,8 +27,9 @@
   "license": "MIT",
   "dependencies": {
     "bluebird": "~2.3.4",
-    "cli-color": "~0.3.2",
+    "chalk": "~0.5.1",
     "github": "~0.2.2",
+    "log-symbols": "~1.0.1",
     "minimist": "~1.1.0",
     "moment": "~2.8.3",
     "npm": "~2.1.2",
