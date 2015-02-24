@@ -27,7 +27,7 @@
   "license": "MIT",
   "dependencies": {
     "bluebird": "~2.3.4",
-    "chalk": "~0.5.1",
+    "chalk": "~1.0.0",
     "github": "~0.2.2",
     "log-symbols": "~1.0.1",
     "minimist": "~1.1.0",
