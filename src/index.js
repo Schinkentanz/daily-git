@@ -92,7 +92,7 @@ function getRepoCommits (repoData, branch) {
     }, function(err, status, body, headers) {
       if (err) { reject(err); }
 
-      var commits = Array.prototype.slice.call(body);
+      var commits = Array.prototype.slice.call(body || []);
 
       resolve(commits);
     });
